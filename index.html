@@ -406,7 +406,7 @@ localStorage.stats = JSON.stringify(stats);
 // 显示统计
 function updateDisplay() {
     document.getElementById('stats').innerHTML = `
-        <h3 style="color: #3c3a3a;font-size: 16.38px;">访问统计</h3>
+        <h3 style="color: #3c3a3a;font-size: 16.38px;">访问稽核</h3>
         今日访问人数: ${stats.todayVisitors}人<br>
         今日访问次数: ${stats.todayVisits}次<br>
         累计访问人数: ${stats.totalVisitors}人<br>
@@ -422,7 +422,7 @@ function updateDisplay() {
         版本例号浏览器: ${browserVersion}<br>
         用户访问路径: ${window.location.pathname}<br>
         系统时间: ${currentDateTime}<br>
-        统计日期: ${today}
+        稽核日期: ${today}
     `;
 
     // 显示最近的访问日志
