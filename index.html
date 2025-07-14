@@ -390,9 +390,9 @@ if (isNewVisitor) {
 
     stats.logs.push(logEntry);
 
-    // 限制日志数量（最多保留100条）
-    if (stats.logs.length > 100) {
-        stats.logs = stats.logs.slice(-100);
+    // 限制日志数量（最多保留1000条）
+    if (stats.logs.length > 1000) {
+        stats.logs = stats.logs.slice(-1000);
     }
 }
 
