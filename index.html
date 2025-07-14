@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>访问统计</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: Arial;
+            font-size: 14px;
+            background-color: #f0f0f0;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .log-time {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .device-tag {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+        .mobile {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        .desktop {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        .tablet {
+            background-color: #fff3e0;
+            color: #ffa000;
+        }
+        .device-info {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 3px;
+        }
+        .ip-info {
+            font-weight: bold;
+            color: #d32f2f;
+        }
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div id="stats" style="color: #504d4d; font-size: 14px;"></div>
+<div id="logs"></div>
+
+<script>
+// 设备检测函数
+function detectDevice() {
+    const userAgent = navigator.userAgent;
+    const isMobile = /Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(userAgent);
+    const isTablet = /(tablet|ipad|playbook|silk)|(android(?!.*mobile))/i.test(userAgent);
+    
+    if (isMobile) return 'mobile';
+    if (isTablet) return 'tablet';
+    return 'desktop';
+}
+
+// 检测手机型号和版本名
+function detectDeviceModel() {
+    const userAgent = navigator.userAgent;
+    
+    // 检测iOS设备
+    if (/iPhone|iPad|iPod/i.test(userAgent)) {
+        const modelMap = {
+            'iPhone1,1': 'iPhone',
+            'iPhone1,2': 'iPhone 3G',
+            'iPhone2,1': 'iPhone 3GS',
+            'iPhone3,1': 'iPhone 4',
+            'iPhone3,2': 'iPhone 4',
+            'iPhone3,3': 'iPhone 4',
+            'iPhone4,1': 'iPhone 4S',
+            'iPhone5,1': 'iPhone 5',
+            'iPhone5,2': 'iPhone 5',
+            'iPhone5,3': 'iPhone 5c',
+            'iPhone5,4': 'iPhone 5c',
+            'iPhone6,1': 'iPhone 5s',
+            'iPhone6,2': 'iPhone 5s',
+            'iPhone7,1': 'iPhone 6 Plus',
+            'iPhone7,2': 'iPhone 6',
+            'iPhone8,1': 'iPhone 6s',
+            'iPhone8,2': 'iPhone 6s Plus',
+            'iPhone8,4': 'iPhone SE',
+            'iPhone9,1': 'iPhone 7',
+            'iPhone9,2': 'iPhone 7 Plus',
+            'iPhone9,3': 'iPhone 7',
+            'iPhone9,4': 'iPhone 7 Plus',
+            'iPhone10,1': 'iPhone 8',
+            'iPhone10,2': 'iPhone 8 Plus',
+            'iPhone10,3': 'iPhone X',
+            'iPhone10,4': 'iPhone 8',
+            'iPhone10,5': 'iPhone 8 Plus',
+            'iPhone10,6': 'iPhone X',
+            'iPhone11,2': 'iPhone XS',
+            'iPhone11,4': 'iPhone XS Max',
+            'iPhone11,6': 'iPhone XS Max',
+            'iPhone11,8': 'iPhone XR',
+            'iPhone12,1': 'iPhone 11',
+            'iPhone12,3': 'iPhone 11 Pro',
+            'iPhone12,5': 'iPhone 11 Pro Max',
+            'iPhone12,8': 'iPhone SE (2nd gen)',
+            'iPhone13,1': 'iPhone 12 mini',
+            'iPhone13,2': 'iPhone 12',
+            'iPhone13,3': 'iPhone 12 Pro',
+            'iPhone13,4': 'iPhone 12 Pro Max',
+            'iPhone14,2': 'iPhone 13 Pro',
+            'iPhone14,3': 'iPhone 13 Pro Max',
+            'iPhone14,4': 'iPhone 13 mini',
+            'iPhone14,5': 'iPhone 13',
+            'iPhone14,6': 'iPhone SE (3rd gen)',
+            'iPhone14,7': 'iPhone 14',
+            'iPhone14,8': 'iPhone 14 Plus',
+            'iPhone15,2': 'iPhone 14 Pro',
+            'iPhone15,3': 'iPhone 14 Pro Max'
+        };
+        
+        const match = userAgent.match(/iPhone\d+,\d+|iPad\d+,\d+|iPod\d+,\d+/);
+        if (match) {
+            return modelMap[match[0]] || match[0];
+        }
+        return 'iPhone/iPad/iPod';
+    }
+    
+    // 检测Android设备
+    if (/Android/i.test(userAgent)) {
+        // 尝试获取设备型号
+        const modelMatch = userAgent.match(/; ([^;)]+)\)/);
+        if (modelMatch) {
+            return modelMatch[1].replace('Build/', '').trim();
+        }
+        
+        // 如果无法获取具体型号，返回Android版本
+        const androidVersionMatch = userAgent.match(/Android (\d+\.\d+)/);
+        if (androidVersionMatch) {
+            return `Android ${androidVersionMatch[1]}`;
+        }
+        
+        return 'Android设备';
+    }
+    
+    // 检测Windows设备
+    if (/Windows/i.test(userAgent)) {
+        return 'Windows设备';
+    }
+    
+    // 检测Mac设备
+    if (/Macintosh/i.test(userAgent)) {
+        return 'Mac设备';
+    }
+    
+    // 检测Linux设备
+    if (/Linux/i.test(userAgent)) {
+        return 'Linux设备';
+    }
+    
+    return '未知设备';
+}
+
+// 获取浏览器版本名
+function detectBrowserVersion() {
+    const userAgent = navigator.userAgent;
+    
+    // 检测Chrome
+    if (/Chrome/i.test(userAgent)) {
+        const match = userAgent.match(/Chrome\/(\d+\.\d+)/);
+        return match ? `Chrome ${match[1]}` : 'Chrome';
+    }
+    
+    // 检测Firefox
+    if (/Firefox/i.test(userAgent)) {
+        const match = userAgent.match(/Firefox\/(\d+\.\d+)/);
+        return match ? `Firefox ${match[1]}` : 'Firefox';
+    }
+    
+    // 检测Safari
+    if (/Safari/i.test(userAgent)) {
+        const match = userAgent.match(/Version\/(\d+\.\d+)/);
+        return match ? `Safari ${match[1]}` : 'Safari';
+    }
+    
+    // 检测Edge
+    if (/Edg/i.test(userAgent)) {
+        const match = userAgent.match(/Edg\/(\d+\.\d+)/);
+        return match ? `Edge ${match[1]}` : 'Edge';
+    }
+    
+    // 检测Opera
+    if (/Opera|OPR/i.test(userAgent)) {
+        const match = userAgent.match(/(Opera|OPR)\/(\d+\.\d+)/);
+        return match ? `Opera ${match[2]}` : 'Opera';
+    }
+    
+    // 检测IE
+    if (/MSIE/i.test(userAgent)) {
+        const match = userAgent.match(/MSIE (\d+\.\d+)/);
+        return match ? `IE ${match[1]}` : 'IE';
+    }
+    
+    return '未知浏览器';
+}
+
+// 格式化日期时间
+function formatDateTime(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return {
+        date: `${year}-${month}-${day}`,
+        time: `${hours}:${minutes}:${seconds}`,
+        full: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+    };
+}
+
+// 获取真实IP地址和地理位置信息
+async function getRealIPAndGeoInfo() {
+    try {
+        // 使用多个IP API服务以提高可靠性
+        const ipApis = [
+            'https://api.ipify.org?format=json',
+            'https://ipapi.co/json/',
+            'https://ipinfo.io/json'
+        ];
+        
+        let ip = '未知';
+        let geoInfo = {
+            country: '未知国家',
+            region: '未知省份',
+            city: '未知城市'
+        };
+        
+        // 尝试从多个API获取IP
+        for (const api of ipApis) {
+            try {
+                const response = await fetch(api);
+                const data = await response.json();
+                
+                if (data.ip) {
+                    ip = data.ip;
+                    // 从API获取地理位置信息
+                    if (data.country) geoInfo.country = data.country_name || data.country || '未知国家';
+                    if (data.region) geoInfo.region = data.region || '未知省份';
+                    if (data.city) geoInfo.city = data.city || '未知城市';
+                    
+                    // 如果使用ipapi.co或ipinfo.io，可以直接获取完整地理位置
+                    if (api.includes('ipapi.co') || api.includes('ipinfo.io')) {
+                        return {
+                            ip: ip,
+                            country: data.country_name || data.country || '未知国家',
+                            region: data.region || '未知省份',
+                            city: data.city || '未知城市'
+                        };
+                    }
+                    break;
+                }
+            } catch (error) {
+                console.error(`从 ${api} 获取IP失败:`, error);
+                continue;
+            }
+        }
+        
+        // 如果只获取到IP但没有地理位置，再单独查询地理位置
+        if (ip !== '未知') {
+            try {
+                const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+                const geoData = await geoResponse.json();
+                
+                if (geoData.country) {
+                    geoInfo = {
+                        country: geoData.country_name || geoData.country || '未知国家',
+                        region: geoData.region || '未知省份',
+                        city: geoData.city || '未知城市'
+                    };
+                }
+            } catch (geoError) {
+                console.error('获取地理位置失败:', geoError);
+            }
+        }
+        
+        return {
+            ip: ip,
+            ...geoInfo
+        };
+    } catch (error) {
+        console.error('获取IP和地理位置失败:', error);
+        return {
+            ip: '未知',
+            country: '未知国家',
+            region: '未知省份',
+            city: '未知城市'
+        };
+    }
+}
+
+// 初始化统计
+let stats = JSON.parse(localStorage.stats || '{}');
+const now = new Date();
+const { date: today, time: currentTime, full: currentDateTime } = formatDateTime(now);
+
+// 检查是否是新的日期
+if (!stats.date || stats.date !== today) {
+    // 保留总访问数据，重置当天数据
+    stats = {
+        date: today,
+        todayVisits: 0,
+        todayVisitors: 0,
+        totalVisits: stats.totalVisits || 0,
+        totalVisitors: stats.totalVisitors || 0,
+        visitors: stats.visitors || [],
+        logs: stats.logs || [],
+        devices: stats.devices || { mobile: 0, tablet: 0, desktop: 0 },
+        locations: stats.locations || {}
+    };
+}
+
+// 检查是否新访客
+let visitorId = localStorage.visitorId || Math.random().toString(36).substr(2, 9);
+let isNewVisitor = !stats.visitors.includes(visitorId);
+
+// 检测设备类型
+const deviceType = detectDevice();
+const deviceModel = detectDeviceModel();
+const browserVersion = detectBrowserVersion();
+
+// 根据设备类型设置IP
+const presetIPs = {
+    desktop: '117.183.199.98',  // PC端IP
+    mobile: '10.45.116.66',     // 手机端IP
+    tablet: '10.45.116.66'      // 平板使用手机IP
+};
+
+// 初始IP和地理位置信息
+let ipInfo = {
+    ip: presetIPs[deviceType] || '未知',
+    country: '获取中...',
+    region: '获取中...',
+    city: '获取中...'
+};
+
+// 更新统计
+if (isNewVisitor) {
+    stats.visitors.push(visitorId);
+    stats.todayVisitors++;
+    stats.totalVisitors++;
+    stats.devices[deviceType]++;
+    localStorage.visitorId = visitorId;
+}
+
+stats.todayVisits++;
+stats.totalVisits++;
+
+// 记录访问日志
+const logEntry = {
+    ip: ipInfo.ip,
+    path: window.location.pathname,
+    time: currentTime,
+    date: today,
+    datetime: currentDateTime,
+    device: deviceType,
+    deviceModel: deviceModel,
+    browser: browserVersion,
+    country: ipInfo.country,
+    region: ipInfo.region,
+    city: ipInfo.city
+};
+
+stats.logs.push(logEntry);
+
+// 限制日志数量（最多保留100条）
+if (stats.logs.length > 100) {
+    stats.logs = stats.logs.slice(-100);
+}
+
+// 保存数据
+localStorage.stats = JSON.stringify(stats);
+
+// 显示统计
+function updateDisplay() {
+    document.getElementById('stats').innerHTML = `
+        <h3 style="color: #3c3a3a;font-size: 16.38px;">访问统计</h3>
+        今日访问次数: ${stats.todayVisitors}人/${stats.todayVisits}次<br>
+        累计访问次数: ${stats.totalVisitors}人/${stats.totalVisits}次<br>
+        设备分布: 
+        手机 ${stats.devices.mobile}次 | 
+        平板 ${stats.devices.tablet}次 | 
+        电脑 ${stats.devices.desktop}次<br>
+        用户访问地址 <span class="ip-info">IP: ${ipInfo.ip}</span><br>
+        地理位置: ${ipInfo.country} ${ipInfo.region} ${ipInfo.city}<br>
+        设备信息: ${deviceModel}<br>
+        版本例号浏览器: ${browserVersion}<br>
+        用户访问路径: ${window.location.pathname}<br>
+        系统时间: ${currentDateTime}<br>
+        统计日期: ${today}
+    `;
+
+    // 显示最近的访问日志
+    let logsHTML = '<h3 style="color: #3c3a3a;font-size: 16.38px;">最近访问记录</h3>';
+    stats.logs.slice().reverse().forEach(log => {
+        const deviceClass = log.device === 'mobile' ? 'mobile' : 
+                          log.device === 'tablet' ? 'tablet' : 'desktop';
+        const deviceName = log.device === 'mobile' ? '手机' : 
+                         log.device === 'tablet' ? '平板' : '电脑';
+        
+        logsHTML += `
+            <div class="log-entry" style="color: #504d4d;">
+                <div>
+                    <strong class="ip-info">${log.ip}</strong> 
+                    <span class="device-tag ${deviceClass}">${deviceName}</span>
+                    访问了 ${log.path}
+                </div>
+                <div class="device-info">
+                    设备: ${log.deviceModel} | 浏览器: ${log.browser}
+                </div>
+                <div>
+                    位置: ${log.country} ${log.region} ${log.city}
+                </div>
+                <div class="log-time">${log.datetime}</div>
+            </div>
+        `;
+    });
+    document.getElementById('logs').innerHTML = logsHTML;
+}
+
+// 初始显示
+updateDisplay();
+
+// 获取真实IP和地理位置信息（仅用于地理位置，IP使用预设值）
+getRealIPAndGeoInfo().then(info => {
+    // 只更新地理位置信息，IP保持不变
+    ipInfo.country = info.country;
+    ipInfo.region = info.region;
+    ipInfo.city = info.city;
+    
+    // 更新日志中的地理位置
+    stats.logs[stats.logs.length - 1].country = info.country;
+    stats.logs[stats.logs.length - 1].region = info.region;
+    stats.logs[stats.logs.length - 1].city = info.city;
+    
+    // 保存更新后的数据
+    localStorage.stats = JSON.stringify(stats);
+    
+    // 更新显示
+    updateDisplay();
+}).catch(error => {
+    console.error('获取地理位置失败:', error);
+    ipInfo.country = '获取失败';
+    ipInfo.region = '获取失败';
+    ipInfo.city = '获取失败';
+    updateDisplay();
+});
+
+// 添加定时检查日期的功能
+setInterval(() => {
+    const currentDate = formatDateTime(new Date()).date;
+    if (currentDate !== today) {
+        // 如果日期变化，刷新页面以重置统计
+        location.reload();
+    }
+}, 60000); // 每分钟检查一次日期
+</script>
+</body>
+</html>
