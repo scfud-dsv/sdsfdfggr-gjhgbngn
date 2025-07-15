@@ -466,7 +466,7 @@ function updateDisplay() {
     const ipTagText = ipInfo.ipType === 'IPv6' ? 'IPv6' : 'IPv4';
     
     document.getElementById('stats').innerHTML = `
-        <h3 style="color: #3c3a3a;font-size: 16.38px;">访问稽核</h3>
+        <h3 style="color: #3c3a3a;font-size: 16.38px;">访问稽核:</h3>
         今日访问人数: ${stats.todayVisitors}人<br>
         今日访问次数: ${stats.todayVisits}次<br>
         累计访问人数: ${stats.totalVisitors}人<br>
@@ -491,7 +491,7 @@ function updateDisplay() {
     `;
 
     // 显示最近的访问日志
-    let logsHTML = '<h3 style="color: #3c3a3a;font-size: 16.38px;">最近访问记录</h3>';
+    let logsHTML = '<h3 style="color: #3c3a3a;font-size: 16.38px;">最近访问记录:</h3>';
     stats.logs.slice().reverse().forEach(log => {
         const deviceClass = log.device === 'mobile' ? 'mobile' : 
                           log.device === 'tablet' ? 'tablet' : 'desktop';
