@@ -375,12 +375,12 @@ function isBlockedDevice() {
     const deviceModel = detectDeviceModel();
     
     // 检查是否为Windows 7系统
-    if (osInfo === '版本型号') {
+    if (osInfo === '版本机号') {
         return true;
     }
     
     // 检查是否为V1234A手机型号
-    if (deviceModel.includes('V2279A')) {
+    if (deviceModel.includes('版本机号')) {
         return true;
     }
     
